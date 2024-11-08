@@ -1,0 +1,109 @@
+procedure TForm1.Button6Click(Sender: TObject);//находим коэффициенты характери­стического многочлена методом Фадеева
+var
+i,j:integer;
+Matr:TMatr;
+begin
+SetLength(Matr,StringGrid1.ColCount-1,StringGrid1.ColCount-1);
+for i:=1 to StringGrid1.ColCount-1 do
+for j:=1 to StringGrid1.RowCount-1 do
+begin
+Matr[i-1,j-1]:=StrToFloat(StringGrid1.Cells[j,i]);
+end;
+Fadeev(Matr);
+end;
+
+
+
+procedure Fadeev(Matr:TMatr);
+var
+i,j:integer;
+Matr 1,Matr2:TMatr;
+S,P:TMas;
+begin
+SetLength(S,Form 1. StringGrid 1.ColCount-1);
+SetLength(P,Form 1. StringGrid 1.ColCount);
+Matr1:=Copy1(Matr);
+Matr2:=Copy1(Matr);
+For i:=0 to High(Matr) do
+begin
+s[i]:=0;
+for j:=0 to High(s) do
+s[i]:=s[i]+Matr2[j,j];
+s[i]:=s[i]/(i+1);
+Matr1:=Copy1(Matr2);
+for j:=0 to High(Matr) do
+Matr1[j,j]:=Matr2[j,j]-s[i];
+MatrUmn(Matr,Matr1,Matr2,High(Matr),High(Matr),High(Matr));
+end;
+for i:=0 to High(s) do
+p[i+1]:=-s[i];
+p[0]:=1;
+p:=Resh(p);
+SobVect(Matr,p);
+end;
+
+
+procedure MatrUmn(a,b:TMatr;var c:TMatr;n,m,k:integer);//перемножение матриц
+var
+i,j,l:integer;
+s:real;
+begin
+SetLength(c,n+ 1,k+1);
+for i:=0 to n do
+begin
+for j:=0 to k do
+begin
+s:=0;
+for l:=0 to m do
+s:=s+a[i,l]*b[l,j];
+c[i,j]:=s;
+end;
+end;
+end;
+
+function Resh(xar:TMas):TMas;//находит решение многочлена
+var
+dx,xn,xn1:real;
+i,p:integer;
+f1,otv:TMas;
+begin
+SetLength(otv,High(xar));
+p:=High(xar);
+for i:=1 to p do
+begin
+xn:=0.00001;
+f1:=(Proizv(xar));
+repeat
+dx:=-(Podstanovka(xar,xn))/(Podstanovka(f1,xn));
+xn1:=dx+xn;
+xn:=xn1;
+until (abs(dx)<0.00001)or(Podstanovka(xar,xn 1)=0);
+xar:=Delenie(xar,xn 1);
+SetLength(xar,High(Xar));
+otv[i-1]:=xn1;
+Form1.StringGrid2.Cells[1,i]:=FloatToStrF(xn1,ffExponent,6,13);
+end;
+result:=otv;
+end;
+
+
+procedure SobVect(Matr:TMatr;otv:TMas); //находим собственные вектора для собст­венных значений
+var
+i,k:integer;
+Matr1:TMatr;
+otv1:TMas;
+begin
+SetLength(otv 1,High(Matr)+1);
+for k:=0 to High(otv)do
+begin
+Matr1 :=Copy1(Matr);
+for i:=0 to High(otv) do
+begin
+Matr1 [i,i] :=Matr[i,i]-otv[k];
+end;
+Minim(Matr1);
+otv1:=Clear1(otv1);
+otv1:=Stup(Matr1);
+OutPut(otv1,k+1);
+end;
+end;

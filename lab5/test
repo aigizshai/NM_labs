@@ -1,0 +1,63 @@
+package main
+
+import (
+	"fmt"
+)
+
+func coefs(a [][]float64) []float64 {
+	res := make([]float64, len(a))
+	traces := make([]float64, len(a))
+	traces[0] = trace(a)
+	res[0] = -1.0 * traces[0]
+	b := multiplyMatrices(a, a)
+
+	for i := 1; i < len(a); i++ {
+		res[i] = -1 / float64(i) * ((res[i-1]) + res[i-1]*traces[i-1])
+		b = multiplyMatrices(a, b)
+		traces[i] = trace(b)
+	}
+	return res
+}
+
+func trace(a [][]float64) float64 {
+	var tr float64
+	for i := 0; i < len(a); i++ {
+		tr += a[i][i]
+	}
+	return tr
+}
+
+// multiplyMatrices умножает две матрицы a и b и возвращает результат
+func multiplyMatrices(a, b [][]float64) [][]float64 {
+	// Проверяем, можно ли умножить матрицы: число столбцов первой матрицы
+	// должно быть равно числу строк второй матрицы
+
+	result := make([][]float64, len(a))
+	for i := range result {
+		result[i] = make([]float64, len(b[0]))
+	}
+	// Умножаем матрицы
+	for i := 0; i < len(a); i++ {
+		for j := 0; j < len(b[0]); j++ {
+			for k := 0; k < len(b); k++ {
+				result[i][j] += a[i][k] * b[k][j]
+			}
+		}
+	}
+
+	return result
+}
+
+func main() {
+	// Пример использования
+	a := [][]float64{
+		{1, -1, -1, 2},
+		{2, 3, 0, -4},
+		{1, 1, -2, -2},
+		{1, 1, 0, -1},
+	}
+
+	fmt.Println("trace a", trace(a))
+
+	fmt.Println("собсвтенные знач ", coefs(a))
+}
