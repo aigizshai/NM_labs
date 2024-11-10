@@ -178,13 +178,16 @@ func main() {
 		fmt.Println(a[i])
 	}
 	fmt.Println("Столбец B")
-	fmt.Println(b, "\n")
+	fmt.Println(b[0])
+	fmt.Println(b[1], "\n")
 
 	x := Regul(n, a, b, eps)
 	fmt.Println("Решение методом регуляризации:")
-	fmt.Printf("%.4f\n", x)
+	fmt.Printf("x1=%.4f\n", x[0])
+	fmt.Printf("x2=%.4f\n", x[1])
 
 	fmt.Println("Решение методом вращения:")
 	x = Vrash(n, a, b)
-	fmt.Printf("%.4f\n", x)
+	fmt.Printf("x1=%.4f\n", x[0])
+	fmt.Printf("x2=%.4f\n", x[1])
 }

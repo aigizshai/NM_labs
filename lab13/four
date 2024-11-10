@@ -1,0 +1,165 @@
+unit Unitl;
+interface
+uses
+Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+Dialogs, StdCtrls, Grids, Math;
+type
+TForml = class(TForm)
+sgOut: TStringGrid;
+btnRun: TButton;
+procedure btnRunClick(Sender: TObject);
+private
+{ Private declarations }
+public
+{ Public declarations }
+end;
+var
+Forml: TForml;
+implementation
+{$R *.dfm}
+type TMas = array of Real;
+procedure FF(var xr, xi, yr, yi: TMas; const n, ind: Integer);
+var
+i,ni,j,jm,k,k1 ,m,mm, m2,log2,l,l1,it: Integer;
+xa,xb,w,si,co: Real;
+begin
+k := n;
+log2 := 0;
+repeat
+k := k div 2;
+log2 := log2 + 1;
+until (k < 2);
+mm := 1;
+{ cycl 1 }
+for m := 1to log2 do
+begin
+m2 := mm*2;
+k1 := trunc(power(2,(log2 - m)) - 1);
+l1 := mm - 1;
+{ cycl 2 }
+for k := 1to k1 + 1do
+begin
+{ cycl 3 }
+for l := 1to l1 + 1do
+begin
+j := m2*(k - 1) + l;
+i := mm*(k - 1) + l;
+w := pi*(l - 1)/mm;
+si := ind*sin(w);
+co := cos(w);
+ni := trunc(power(2,(log2 - 1)) + i);
+jm := trunc(j + power(2, (m - 1)));
+xa := xr[ni]*co + xi[ni]*si;
+xb := xi[ni]*co - xr[ni]*si;
+yr[j] := xr[i] + xa;
+yi[j] := xi[i] + xb;
+yr[jm] := xr[i] - xa;
+yi[jm] := xi[i] - xb;
+end;
+{ cycl 3 }
+end;
+{ cycl 2 }
+{ cycl 5 }
+for it := 1to n do
+begin
+xr[it] := yr[it];
+xi[it] := yi[it];
+end;
+{ cycl 5 }
+mm := m2;
+end;
+{ cycl 1 }
+if ind < 0 then exit;
+{ cycl 4 }
+for i := 1to n do
+begin
+xr[i] := xr[i]/n;
+xi[i] := xi[i]/n;
+end;
+{ cycl 4 }
+end;
+procedure IFF (const a, b: Real; var ar, ai, xr, xi: TMas; const n: Integer; eps: Real; const ip: In­
+teger);
+var
+i,k : Integer;
+h, w, c, s, w1, w2, w3, w4, w5, a1, b1: Real;
+begin
+h := (b - a)/n;
+{Вычисление быстрого преобразования Фурье программой FF}
+FF(ar,ai,xr,xi,n,ip);
+for i := 1to n do
+begin
+k := i - 1;
+w := k*2*pi/(b - a);
+c := cos(w*a);
+s := sin(w*a);
+w := w*h*(b - a);
+if w < eps then
+begin
+w4 := h - 2*pi*pi*k*k*power(h,3)/power((b - a),2);
+w5 := 2*pi*k*h*h/(b - a);
+a1 := w4*ar[i] + ip*w5*ai[i];
+b1 := w4*ai[i] - ip*w5*ar[i];
+end else
+begin
+if k=0 then begin
+w1 :=0;
+w3 := 0
+end else begin
+w1 := sin(2*pi*k/n)*(b - a)/(2*pi*k);
+w2 := 2*power(sin(pi*k/n),2);
+w3 := w2*(b - a)/(2*pi*k);
+end;
+w2 := 2*power(sin(pi*k/n),2);
+a1 := w1*ar[i] + ip*w3*ai[i];
+b1 := w1*ai[i] - ip*w3*ar[i];
+end;
+ar[i] := a1*c + b1*s*ip;
+ai[i] := b1*c - a1*s*ip;
+if ip > 0 then
+begin
+ar[i] := ar[i]*n*n;
+ai[i] := ai[i]*n*n;
+end;
+ar[i] := ar[i]/n;
+ai[i] := ai[i]/n;
+end;
+end;
+procedure TForm1.btnRunClick(Sender: TObject);
+var
+n, i : Integer;
+a, b, h, x, omg, eps : Real;
+xr, xi, ar, ai : TMas;
+begin
+Form1.sgOut.Cells[0,0]:='№';
+Form1.sgOut.Cells[1,0]:='омега';
+Form1.sgOut.Cells[2,0]:='дейст-я часть';
+Form1.sgOut.Cells[3,0] :='мнимая часть';
+eps := 0.1E-6;
+a := 0;
+b := 20;
+n := 512;
+h := 20/n;
+omg := 0;
+SetLength(xr, n+1);
+SetLength(xi, n+1);
+SetLength(ar, n+1);
+SetLength(ai, n+1);
+for i := 1to n do
+begin
+x := (i - 1)*h;
+ar[i] := exp(-x*x);
+ai[i] := 0;
+end;
+IFF(a,b,ar,ai,xr,xi,n,eps,1);
+sgOut.RowCount := n + 1;
+for i := 1to n do
+begin
+omg := (i - 1)*2*pi/(b - a);
+sgOut.Cells[0,i] := IntToStr(i);
+sgOut.Cells[1,i] := FloatToStrF(omg,ffFixed,7,6);
+sgOut.Cells[2,i] := FloatToStrF(ar[i],ffExponent,7,7);
+sgOut.Cells[3,i] := FloatToStrF(ai[i],ffExponent,7,7);
+end;
+end;
+end.

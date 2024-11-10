@@ -1,0 +1,30 @@
+function f(x: Real):Real;
+begin
+Result := -0.5;
+if abs(x) > 1e-8 then
+Result := (cos(x) - 1)/(x*x)
+end;
+
+
+Формула прямоугольников
+function RECT (const a,b: Real; const n: Integer ): Real;
+Входные параметры :
+a - нижний предел интегрирования;
+b - верхний предел интегрирования;
+n - число отрезков в с е т к е .
+Выходные параметры : значение интеграла присваивается имени функции
+Текст функции :
+function RECT(const a,b: Real; const n: Integer): Real;
+var
+h, h2, s, x: Real;
+j : Integer;
+begin
+h := (b-a)/n;
+h2 := h/2.0;
+s := 0.0;
+for j := 1 to n do begin
+x := a + j * h - h2;
+s := s + f(x);
+end;
+Result := s * h;
+end;

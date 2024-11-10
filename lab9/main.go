@@ -86,19 +86,17 @@ func adams4(a, b, h float64, y1Init, y2Init float64) ([]float64, []float64, []fl
 }
 
 func main() {
-	// Параметры задачи
 	a := 0.0       // начальная точка
 	b := 4.0       // конечная точка
 	h := 0.1       // шаг
 	y1Init := 0.7  // начальное значение y1
 	y2Init := -0.5 // начальное значение y2
 
-	// Решение задачи методом Адамса-Бэшфорта
+	// метод Адамса
 	x, y1, y2 := adams4(a, b, h, y1Init, y2Init)
 
-	// Вывод результатов
-	fmt.Printf("x\t\ty1\t\ty2\n")
+	fmt.Println("Метод Адамса")
 	for i := range x {
-		fmt.Printf("x=%.1f\ty1=%.5f\ty2=%.5f\n", x[i], y1[i], y2[i])
+		fmt.Printf("x=%4.1f\ty1=%10.5f\ty2=%10.5f\n", x[i], y1[i], y2[i])
 	}
 }

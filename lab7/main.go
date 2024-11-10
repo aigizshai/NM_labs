@@ -2,6 +2,42 @@ package main
 
 import "fmt"
 
+// Функция для вычисления барицентрических весов
+func barycentricWeights(x []float64) []float64 {
+	n := len(x)
+	weights := make([]float64, n)
+
+	for i := 0; i < n; i++ {
+		weights[i] = 1.0
+		for j := 0; j < n; j++ {
+			if i != j {
+				weights[i] *= 1.0 / (x[i] - x[j])
+			}
+		}
+	}
+
+	return weights
+}
+
+// Функция для интерполяции методом Лагранжа в барицентрической форме
+func lagrange(n int, x, y, weights []float64, q float64) float64 {
+	numerator := 0.0
+	denominator := 0.0
+
+	for i := 0; i < n; i++ {
+		if q == x[i] {
+			// Если q совпадает с одной из точек x[i], возвращаем соответствующее значение y[i]
+			return y[i]
+		}
+		// Вычисляем вклад каждой точки в числитель и знаменатель
+		factor := weights[i] / (q - x[i])
+		numerator += factor * y[i]
+		denominator += factor
+	}
+
+	return numerator / denominator
+}
+
 // Функция вычисления значения интерполяционного многочлена Лагранжа
 func Lagrange(n int, x, y []float64, q float64) float64 {
 	L := 0.0
@@ -223,16 +259,18 @@ func gaussSolve(a [][]float64, b []float64) []float64 {
 
 func main() {
 	// Пример использования функции Lagrange
-	x := []float64{1.0, 2.0, 3.0, 4, 5, 6, 7, 8, 9, 10}
-	y := []float64{2.05, 1.94, 1.92, 1.87, 1.77, 1.88, 1.71, 1.60, 1.56, 1.40}
+	x := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+	y := []float64{-1.92, -1.60, -1.57, -1.41, -1.36, -0.97, -0.59, -0.71, -0.15, 0.01, 0.22, 0.63, 1.07, 1.42, 1.68, 2.49, 2.57, 3.09, 3.40, 4.0}
 	dx := 0.5
 
 	q := x[0]
 
+	weights := barycentricWeights(x)
+
 	fmt.Println("Интерполяция методом Лагранжа")
-	for i := 0; i < 19; i++ {
-		result := Lagrange(len(x), x, y, q)
-		fmt.Printf("x= %.2f y=%.3f\n", q, result)
+	for i := 0; i < 39; i++ {
+		result := lagrange(len(x), x, y, weights, q)
+		fmt.Printf("x= %.2f y = %.3f\n", q, result)
 		q += dx
 
 	}
@@ -241,18 +279,18 @@ func main() {
 
 	fmt.Println("Интерполяция функций с помощью кубического сплайна:")
 	xx := 1.0
-	for i := 0; i < 19; i++ {
+	for i := 0; i < 39; i++ {
 		s := Spline(n, x, y, xx)
 		fmt.Printf("x = %.2f, y = %.3f\n", xx, s)
-		xx += 0.5
+		xx += dx
 	}
 
 	q = x[0]
 
 	fmt.Println("Интерполяция методом Ньютона")
-	for i := 0; i < 19; i++ {
+	for i := 0; i < 39; i++ {
 		result := NewtonInterpolation(len(x), x, y, q)
-		fmt.Printf("x= %.2f y=%.3f\n", q, result)
+		fmt.Printf("x = %.2f y = %.3f\n", q, result)
 		q += dx
 
 	}
@@ -262,11 +300,11 @@ func main() {
 	result, c0, c1, c2 := LeastSquares(n, x, y, q)
 
 	fmt.Printf("Коэффициенты: c0 = %.5f, c1 = %.5f, c2 = %.5f\n", c0, c1, c2)
-	fmt.Printf("x = %.2f: %.3f\n", q, result)
+	fmt.Printf("x = %.2f y = %.3f\n", q, result)
 	q += dx
-	for i := 0; i < 18; i++ {
+	for i := 0; i < 38; i++ {
 		result, c0, c1, c2 = LeastSquares(n, x, y, q)
-		fmt.Printf("x = %.2f: %.3f\n", q, result)
+		fmt.Printf("x = %.2f y = %.3f\n", q, result)
 		q += dx
 
 	}

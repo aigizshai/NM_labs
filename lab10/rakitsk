@@ -145,3 +145,124 @@ begin {вычисление решения на данном шаге Х}
 MetRak(n,H,A1,Y0,Q1,1,nts);
 Writeln(x:2:2,' I ',Y0[1]:0,' I ', Y0[2]:0);
 x:=x+0.1; end;end.
+
+
+
+
+unit Unit1;
+interface
+uses
+Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+Dialogs, Grids, StdCtrls, ExtCtrls, ComCtrls;
+type
+TForm1 = class(TForm)
+Panel1: TPanel;
+Label1: TLabel;
+StringGrid1: TStringGrid;
+Button1: TButton;
+Edit1: TEdit;
+Edit2: TEdit;
+Edit3: TEdit;
+Label2: TLabel;
+Label3: TLabel;
+Label4: TLabel;
+UpDown1: TUpDown;
+UpDown2: TUpDown;
+Label5: TLabel;
+UpDown3: TUpDown;
+procedure Button1Click(Sender: TObject);
+procedure FormShow(Sender: TObject);
+private
+{ Private declarations }
+public
+{ Public declarations }
+end;
+var
+Form1: TForm1;
+implementation
+{$R *.dfm}
+Type
+TF=Function (x,y1,y2:Real):Real;
+TFMas=array [1..2] of TF;
+TMas=array [1..2] of Real;
+Function F1 (x,y1,y2:Real):Real;
+Begin
+Result:=-11*y1+9*y2;
+End;
+Function F2(x,y1,y2:Real):Real;
+Begin
+Result:=9*y1-11*y2;
+End;
+Procedure Runge_Kut(a,b:Real;n:Integer;x:Real;Var y_1:TMas;FMas:TFMas);
+Var
+j:Integer;
+k:array [1..4] of Real;
+h:Real;
+New:TMas;
+Begin
+n:=n;
+h:=(b-a)/n;
+New[1]:=y_1[1];
+New[2]:=y_1[2];
+For j:=1 to 2 do
+Begin
+k[1]:=h*FMas[j] (x,New[1],New[2]);
+k[2]:=h*FMas[j](x+h/2,New[1]+1/2*k[1],New[2]+1/2*k[1]);
+k[3]:=h*FMas[j](x+h/2,New[1]+1/2*k[2],New[2]+1/2*k[2]);
+k[4] :=h*FMas[j] (x+h,New[1]+k[3] ,New[2]+k[3]);
+y_1[j]:=y_1[j]+h/6*(k[1]+2*k[2]+2*k[3]+k[4]);
+End;
+End;
+Procedure Gir(a,b:Real;n:Integer;x:Real;Var y_1:TMas;FMas:TFMas);
+Var
+i,j,z:Integer;
+h,c1,c2:Real;
+Fun:array [1..2,1..4] of Real;
+Begin
+z:=0;
+Form1.StringGrid1.ColCount:=n+1;
+Form1.StringGrid1.Cells[0,1]:='Y1';
+Form1.StringGrid1.Cells[0,2]:='Y2';
+h:=(b-a)/n;
+For i:=1 to 4 do
+Begin
+Runge_Kut(a,b,n,x,y_1,FMas);
+x:=x+h;
+For j:=1 to 2 do Fun[j,i]:=y_1[j];
+End;
+x:=a+0.1;
+For i:=1 to n do
+Begin
+c1:=(-48*Fun[1,4]+36*Fun[1,3]-16*Fun[1,2]+3*Fun[1,1])/1.2;
+c2:=(-48*Fun[2,4]+36*Fun[2,3]-16*Fun[2,2]+3*Fun[2,1])/1.2;
+y_1[1]:=(-9*c2-(25/1.2+11)*c1)/((25/1.2+11)*(25/1.2+11)-9*9);
+y_1[2]:=(9*y_1[1]-c2)/(25/1.2+11);
+// Данные формулы получены из решения системы линейных уравнений
+// по формуле Гира выражением одной переменной через другую
+Inc(z);
+For j:=1 to 2 do
+Begin
+Fun[j,1]:=Fun[j,2];Fun[j,2]:=Fun[j,3];Fun[j,3]:=Fun[j,4];Fun[j,4]:=y_1[j];
+End;
+Form1.StringGrid1.Cells[z,0]:='X='+FloatToStr(x);
+Form1.StringGrid1.Cells[z,1]:=FloatToStrF(y_1[1],ffExponent,4,6);
+Form1.StringGrid1.Cells[z,2]:=FloatToStrF(y_1[2],ffExponent,4,6);
+x:=x+h;
+End;
+End;
+procedure TForm1.Button1Click(Sender: TObject);
+var
+FMas:TFMas;
+y_1:TMas;
+begin
+y_1[1]:=1;
+y_1[2]:=0;
+FMas[1]:=f1;
+FMas[2]:=f2;
+Gir(StrToInt(Edit1.Text),StrToInt(Edit2.Text),StrToInt(Edit3.Text),0,y_1,FMas);
+end;
+procedure TForm1.FormShow(Sender: TObject);
+begin
+Button1.SetFocus;
+end;
+end.
