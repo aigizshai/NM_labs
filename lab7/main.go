@@ -1,58 +1,61 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
-// Функция для вычисления барицентрических весов
-func barycentricWeights(x []float64) []float64 {
-	n := len(x)
-	weights := make([]float64, n)
+// lagrangeInterpolation выполняет интерполяцию с расширением границ.
+func lagrange(xPoints, yPoints []float64, x float64) float64 {
 
+	//расширяем границы
+	xExtended, yExtended := extendBounds(xPoints, yPoints)
+	n := len(xExtended)
+	result := 0.0
 	for i := 0; i < n; i++ {
-		weights[i] = 1.0
+
+		L := 1.0
 		for j := 0; j < n; j++ {
 			if i != j {
-				weights[i] *= 1.0 / (x[i] - x[j])
+				L *= (x - xExtended[j]) / (xExtended[i] - xExtended[j])
 			}
 		}
+
+		result += L * yExtended[i]
+
 	}
 
-	return weights
+	return result
 }
 
-// Функция для интерполяции методом Лагранжа в барицентрической форме
-func lagrange(n int, x, y, weights []float64, q float64) float64 {
-	numerator := 0.0
-	denominator := 0.0
+// добавляет точки за пределы интервала
+func extendBounds(xPoints, yPoints []float64) ([]float64, []float64) {
+	n := len(xPoints)
 
-	for i := 0; i < n; i++ {
-		if q == x[i] {
-			// Если q совпадает с одной из точек x[i], возвращаем соответствующее значение y[i]
-			return y[i]
-		}
-		// Вычисляем вклад каждой точки в числитель и знаменатель
-		factor := weights[i] / (q - x[i])
-		numerator += factor * y[i]
-		denominator += factor
-	}
+	dxLeft := xPoints[1] - xPoints[0] // Шаг между первыми точками
+	xMin1 := xPoints[0] - dxLeft      // Первая левая точка
+	xMin2 := xPoints[0] - 2*dxLeft    // Вторая левая точка
+	yMin1 := linearExtrapolation(xPoints[0], xPoints[1], yPoints[0], yPoints[1], xMin1)
+	yMin2 := linearExtrapolation(xPoints[0], xPoints[1], yPoints[0], yPoints[1], xMin2)
 
-	return numerator / denominator
+	dxRight := xPoints[n-1] - xPoints[n-2] // Шаг между последними точками
+	xMax1 := xPoints[n-1] + dxRight        // Первая правая точка
+	xMax2 := xPoints[n-1] + 2*dxRight      // Вторая правая точка
+	yMax1 := linearExtrapolation(xPoints[n-2], xPoints[n-1], yPoints[n-2], yPoints[n-1], xMax1)
+	yMax2 := linearExtrapolation(xPoints[n-2], xPoints[n-1], yPoints[n-2], yPoints[n-1], xMax2)
+
+	// Добавляем новые точки к массивам
+	xExtended := append([]float64{xMin2, xMin1}, xPoints...)
+	xExtended = append(xExtended, xMax1, xMax2)
+
+	yExtended := append([]float64{yMin2, yMin1}, yPoints...)
+	yExtended = append(yExtended, yMax1, yMax2)
+
+	return xExtended, yExtended
 }
 
-// Функция вычисления значения интерполяционного многочлена Лагранжа
-func Lagrange(n int, x, y []float64, q float64) float64 {
-	L := 0.0
-
-	for i := 0; i < n; i++ {
-		s := 1.0
-		for j := 0; j < n; j++ {
-			if j != i {
-				s *= (q - x[j]) / (x[i] - x[j])
-			}
-		}
-		L += y[i] * s
-	}
-
-	return L
+// выполняет линейную экстраполяцию между двумя точками
+func linearExtrapolation(x1, x2, y1, y2, x float64) float64 {
+	return y1 + (y2-y1)*(x-x1)/(x2-x1)
 }
 
 func Progon(a, b, c, d []float64, n int) []float64 {
@@ -258,56 +261,62 @@ func gaussSolve(a [][]float64, b []float64) []float64 {
 }
 
 func main() {
-	// Пример использования функции Lagrange
-	x := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+	x := []float64{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0}
 	y := []float64{-1.92, -1.60, -1.57, -1.41, -1.36, -0.97, -0.59, -0.71, -0.15, 0.01, 0.22, 0.63, 1.07, 1.42, 1.68, 2.49, 2.57, 3.09, 3.40, 4.0}
-	dx := 0.5
+	//y := []float64{1.99, 2.03, 2.20, 2.39, 2.19, 2.61, 2.35, 2.60, 2.55, 2.49, 2.50, 2.52, 2.44, 2.35, 2.26, 2.19, 2.24, 2.34, 1.96, 2.19}
+	dx := 0.05
 
 	q := x[0]
 
-	weights := barycentricWeights(x)
-
 	fmt.Println("Интерполяция методом Лагранжа")
 	for i := 0; i < 39; i++ {
-		result := lagrange(len(x), x, y, weights, q)
-		fmt.Printf("x= %.2f y = %.3f\n", q, result)
+		resultLagr := lagrange(x, y, q)
+		resultSpline := Spline(len(x), x, y, q)
+		resultNewton := NewtonInterpolation(len(x), x, y, q)
+		resultLeastSqr, _, _, _ := LeastSquares(len(x), x, y, q)
+
+		fmt.Printf("x= %3.2f y = %6.3f, y = %6.3f, y = %6.3f, y = %6.3f\n", q, resultLagr, resultSpline, resultNewton, resultLeastSqr)
+		//		fmt.Println("q=", q)
 		q += dx
 
 	}
-
-	n := len(x)
-
-	fmt.Println("Интерполяция функций с помощью кубического сплайна:")
-	xx := 1.0
-	for i := 0; i < 39; i++ {
-		s := Spline(n, x, y, xx)
-		fmt.Printf("x = %.2f, y = %.3f\n", xx, s)
-		xx += dx
-	}
-
-	q = x[0]
-
-	fmt.Println("Интерполяция методом Ньютона")
-	for i := 0; i < 39; i++ {
-		result := NewtonInterpolation(len(x), x, y, q)
-		fmt.Printf("x = %.2f y = %.3f\n", q, result)
-		q += dx
-
-	}
-
-	fmt.Println("Аппроксимация методом наименьших квадратов")
-	q = x[0]
-	result, c0, c1, c2 := LeastSquares(n, x, y, q)
+	_, c0, c1, c2 := LeastSquares(len(x), x, y, q)
 
 	fmt.Printf("Коэффициенты: c0 = %.5f, c1 = %.5f, c2 = %.5f\n", c0, c1, c2)
-	fmt.Printf("x = %.2f y = %.3f\n", q, result)
-	q += dx
-	for i := 0; i < 38; i++ {
-		result, c0, c1, c2 = LeastSquares(n, x, y, q)
-		fmt.Printf("x = %.2f y = %.3f\n", q, result)
-		q += dx
 
-	}
+	// n := len(x)
+
+	// fmt.Println("Интерполяция функций с помощью кубического сплайна:")
+	// xx := 1.0
+	// for i := 0; i < 39; i++ {
+	// 	s := Spline(n, x, y, xx)
+	// 	fmt.Printf("x = %.2f, y = %.3f\n", xx, s)
+	// 	xx += dx
+	// }
+
+	// q = x[0]
+
+	// fmt.Println("Интерполяция методом Ньютона")
+	// for i := 0; i < 39; i++ {
+	// 	result := NewtonInterpolation(len(x), x, y, q)
+	// 	fmt.Printf("x = %.2f y = %.3f\n", q, result)
+	// 	q += dx
+
+	// }
+
+	// fmt.Println("Аппроксимация методом наименьших квадратов")
+	// q = x[0]
+	// result, c0, c1, c2 := LeastSquares(len(x), x, y, q)
+
+	// fmt.Printf("Коэффициенты: c0 = %.5f, c1 = %.5f, c2 = %.5f\n", c0, c1, c2)
+	// fmt.Printf("x = %.2f y = %.3f\n", q, result)
+	// q += dx
+	// for i := 0; i < 38; i++ {
+	// 	result, c0, c1, c2 = LeastSquares(len(x), x, y, q)
+	// 	fmt.Printf("x = %.2f y = %.3f, c0=%.4f,c1=%.4f,c2=%.4f\n", q, result, c0, c1, c2)
+	// 	q += dx
+
+	// }
 
 	//сдедлать вывод в несколько колонок и поменять нач значения
 }
