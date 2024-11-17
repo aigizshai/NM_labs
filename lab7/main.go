@@ -80,7 +80,7 @@ func Progon(a, b, c, d []float64, n int) []float64 {
 	return x
 }
 
-// Функция интерполяции с помощью кубического сплайна
+// интерполяция сплайном
 func Spline(n int, x, y []float64, xx float64) float64 {
 	a := make([]float64, n)
 	b := make([]float64, n)
@@ -261,22 +261,27 @@ func gaussSolve(a [][]float64, b []float64) []float64 {
 }
 
 func main() {
-	x := []float64{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0}
-	y := []float64{-1.92, -1.60, -1.57, -1.41, -1.36, -0.97, -0.59, -0.71, -0.15, 0.01, 0.22, 0.63, 1.07, 1.42, 1.68, 2.49, 2.57, 3.09, 3.40, 4.0}
+	x := []float64{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	y := []float64{2.05, 1.94, 1.92, 1.87, 1.77, 1.88, 1.71, 1.60, 1.56, 1.40}
+	//x := []float64{0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0, 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8, 1.9, 2.0}
+	//y := []float64{-1.92, -1.60, -1.57, -1.41, -1.36, -0.97, -0.59, -0.71, -0.15, 0.01, 0.22, 0.63, 1.07, 1.42, 1.68, 2.49, 2.57, 3.09, 3.40, 4.0}
 	//y := []float64{1.99, 2.03, 2.20, 2.39, 2.19, 2.61, 2.35, 2.60, 2.55, 2.49, 2.50, 2.52, 2.44, 2.35, 2.26, 2.19, 2.24, 2.34, 1.96, 2.19}
-	dx := 0.05
+	dx := 0.5
 
 	q := x[0]
-
+	c := 0
 	fmt.Println("Интерполяция методом Лагранжа")
-	for i := 0; i < 39; i++ {
+	for i := 0; i < 19; i++ {
 		resultLagr := lagrange(x, y, q)
 		resultSpline := Spline(len(x), x, y, q)
 		resultNewton := NewtonInterpolation(len(x), x, y, q)
 		resultLeastSqr, _, _, _ := LeastSquares(len(x), x, y, q)
 
-		fmt.Printf("x= %3.2f y = %6.3f, y = %6.3f, y = %6.3f, y = %6.3f\n", q, resultLagr, resultSpline, resultNewton, resultLeastSqr)
+		fmt.Printf("x= %3.2f, y =%.2f| y = %6.3f| y = %6.3f| y = %6.3f| y = %6.3f\n", q, y[c], resultLagr, resultSpline, resultNewton, resultLeastSqr)
 		//		fmt.Println("q=", q)
+		if i%2 == 1 {
+			c++
+		}
 		q += dx
 
 	}
@@ -284,39 +289,4 @@ func main() {
 
 	fmt.Printf("Коэффициенты: c0 = %.5f, c1 = %.5f, c2 = %.5f\n", c0, c1, c2)
 
-	// n := len(x)
-
-	// fmt.Println("Интерполяция функций с помощью кубического сплайна:")
-	// xx := 1.0
-	// for i := 0; i < 39; i++ {
-	// 	s := Spline(n, x, y, xx)
-	// 	fmt.Printf("x = %.2f, y = %.3f\n", xx, s)
-	// 	xx += dx
-	// }
-
-	// q = x[0]
-
-	// fmt.Println("Интерполяция методом Ньютона")
-	// for i := 0; i < 39; i++ {
-	// 	result := NewtonInterpolation(len(x), x, y, q)
-	// 	fmt.Printf("x = %.2f y = %.3f\n", q, result)
-	// 	q += dx
-
-	// }
-
-	// fmt.Println("Аппроксимация методом наименьших квадратов")
-	// q = x[0]
-	// result, c0, c1, c2 := LeastSquares(len(x), x, y, q)
-
-	// fmt.Printf("Коэффициенты: c0 = %.5f, c1 = %.5f, c2 = %.5f\n", c0, c1, c2)
-	// fmt.Printf("x = %.2f y = %.3f\n", q, result)
-	// q += dx
-	// for i := 0; i < 38; i++ {
-	// 	result, c0, c1, c2 = LeastSquares(len(x), x, y, q)
-	// 	fmt.Printf("x = %.2f y = %.3f, c0=%.4f,c1=%.4f,c2=%.4f\n", q, result, c0, c1, c2)
-	// 	q += dx
-
-	// }
-
-	//сдедлать вывод в несколько колонок и поменять нач значения
 }
