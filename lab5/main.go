@@ -5,231 +5,189 @@ import (
 	"math"
 )
 
-// Определяем типы для матрицы и вектора
-type Matrix [][]float64
-type Vector []float64
+func Leverrier(n int, a [][]float64) []float64 {
+	p := make([]float64, n)
+	p[0] = Trace(a)
+	b
+}
 
-// Main - метод запуска Фадеева и вывода результатов
+// Matrix type as a 2D slice
+type Matrix [][]float64
+
+// CreateIdentity creates an identity matrix of size n x n
+func CreateIdentity(n int) Matrix {
+	I := make(Matrix, n)
+	for i := range I {
+		I[i] = make([]float64, n)
+		I[i][i] = 1.0
+	}
+	return I
+}
+
+// Multiply multiplies two matrices A and B
+func Multiply(A, B Matrix) Matrix {
+	n := len(A)
+	m := len(A[0])
+	p := len(B[0])
+	result := make(Matrix, n)
+	for i := range result {
+		result[i] = make([]float64, p)
+	}
+
+	for i := 0; i < n; i++ {
+		for j := 0; j < p; j++ {
+			for k := 0; k < m; k++ {
+				result[i][j] += A[i][k] * B[k][j]
+			}
+		}
+	}
+	return result
+}
+
+// ScaleAndAdd scales matrix A by alpha and adds it to matrix B: result = alpha * A + B
+func ScaleAndAdd(A Matrix, alpha float64, B Matrix) Matrix {
+	n := len(A)
+	m := len(A[0])
+	result := make(Matrix, n)
+	for i := range result {
+		result[i] = make([]float64, m)
+		for j := 0; j < m; j++ {
+			result[i][j] = alpha*A[i][j] + B[i][j]
+		}
+	}
+	return result
+}
+
+// Trace computes the trace of a square matrix A
+func Trace(A Matrix) float64 {
+	trace := 0.0
+	for i := 0; i < len(A); i++ {
+		trace += A[i][i]
+	}
+	return trace
+}
+
+// CopyMatrix creates a deep copy of a matrix
+func CopyMatrix(A Matrix) Matrix {
+	n := len(A)
+	m := len(A[0])
+	B := make(Matrix, n)
+	for i := 0; i < n; i++ {
+		B[i] = make([]float64, m)
+		copy(B[i], A[i])
+	}
+	return B
+}
+
+// LeVerrier computes the coefficients of the characteristic polynomial of a square matrix
+func LeVerrier(A Matrix) []float64 {
+	n := len(A)
+	I := CreateIdentity(n)
+	Mk := CopyMatrix(A)
+	coeffs := make([]float64, n+1)
+	coeffs[n] = 1.0 // Leading coefficient is 1
+
+	for k := 1; k <= n; k++ {
+		trace := Trace(Mk)
+		coeffs[n-k] = (-1.0 / float64(k)) * trace
+
+		// Update Mk = A * (Mk + coeffs[n-k] * I)
+		temp := ScaleAndAdd(I, coeffs[n-k], Mk)
+		Mk = Multiply(A, temp)
+	}
+
+	return coeffs
+}
+
+func EvaluatePolynomial(coeffs []float64, x float64) float64 {
+	result := 0.0
+	n := len(coeffs) - 1
+	for i := 0; i <= n; i++ {
+		result += coeffs[i] * math.Pow(x, float64(n-i))
+	}
+	return result
+}
+
+// EvaluatePolynomialDerivative computes the value of the derivative P'(x) at x
+func EvaluatePolynomialDerivative(coeffs []float64, x float64) float64 {
+	result := 0.0
+	n := len(coeffs) - 1
+	for i := 0; i < n; i++ {
+		result += float64(n-i) * coeffs[i] * math.Pow(x, float64(n-i-1))
+	}
+	return result
+}
+
+// NewtonRaphsonRootFinder finds a single root of the polynomial using the Newton-Raphson method
+func NewtonRaphsonRootFinder(coeffs []float64, initialGuess float64, tolerance float64, maxIterations int) float64 {
+	x := initialGuess
+	for i := 0; i < maxIterations; i++ {
+		Px := EvaluatePolynomial(coeffs, x)
+		Pdx := EvaluatePolynomialDerivative(coeffs, x)
+
+		if math.Abs(Pdx) < tolerance {
+			// Avoid division by zero or near-zero derivative
+			break
+		}
+
+		xNew := x - Px/Pdx
+		if math.Abs(xNew-x) < tolerance {
+			return xNew
+		}
+		x = xNew
+	}
+	return x
+}
+
+// FindRootsStub computes all roots of the polynomial using Newton-Raphson
+func FindRootsStub(coeffs []float64) []float64 {
+	n := len(coeffs) - 1
+	roots := make([]float64, 0, n)
+	tolerance := 1e-6
+	maxIterations := 100
+
+	// Use evenly spaced initial guesses around 0
+	initialGuesses := make([]float64, n)
+	for i := 0; i < n; i++ {
+		initialGuesses[i] = float64(i) - float64(n)/2.0
+	}
+
+	for _, guess := range initialGuesses {
+		root := NewtonRaphsonRootFinder(coeffs, guess, tolerance, maxIterations)
+
+		// Check if the root is already found (to handle duplicates)
+		isUnique := true
+		for _, r := range roots {
+			if math.Abs(r-root) < tolerance {
+				isUnique = false
+				break
+			}
+		}
+
+		if isUnique {
+			roots = append(roots, root)
+		}
+	}
+
+	return roots
+}
+
 func main() {
-	// Пример ввода матрицы (замените на реальное значение)
-	matrix := Matrix{
+	// Example matrix
+	A := Matrix{
 		{1, -1, -1, 2},
 		{2, 3, 0, -4},
 		{1, 1, -2, -2},
 		{1, 1, 0, -1},
 	}
 
-	characteristicPolynom := Fadeev(matrix)
-	fmt.Println("Characteristic Polynomial Coefficients:", characteristicPolynom)
+	// Step 1: Compute characteristic polynomial
+	coeffs := LeVerrier(A)
+	fmt.Println("Characteristic polynomial coefficients:", coeffs)
 
-	eigenValues := Solve(characteristicPolynom)
-	fmt.Println("Eigenvalues:", eigenValues)
+	// Step 2: Compute eigenvalues (roots of the polynomial)
+	eigenvalues := FindRootsStub(coeffs)
+	fmt.Println("Eigenvalues:", eigenvalues)
 
-	for _, eigenvalue := range eigenValues {
-		eigenvector := FindEigenvector(matrix, eigenvalue)
-		fmt.Printf("Eigenvector for eigenvalue %.4f: %v\n", eigenvalue, eigenvector)
-	}
-}
-
-// Fadeev - Метод Фадеева для нахождения характеристического многочлена
-func Fadeev(matrix Matrix) Vector {
-	n := len(matrix)
-	S := make(Vector, n)
-	P := make(Vector, n+1)
-	Matr1 := CopyMatrix(matrix)
-	Matr2 := CopyMatrix(matrix)
-
-	for i := 0; i < n; i++ {
-		S[i] = trace(Matr2) / float64(i+1)
-		for j := 0; j < n; j++ {
-			Matr1[j][j] = Matr2[j][j] - S[i]
-		}
-		Matr2 = MatrixMultiplication(matrix, Matr1)
-	}
-
-	for i := 0; i < n; i++ {
-		P[i+1] = -S[i]
-	}
-	P[0] = 1
-	return P
-}
-
-// MatrixMultiplication - Перемножение двух матриц
-func MatrixMultiplication(a, b Matrix) Matrix {
-	n := len(a)
-	c := make(Matrix, n)
-	for i := 0; i < n; i++ {
-		c[i] = make(Vector, n)
-		for j := 0; j < n; j++ {
-			sum := 0.0
-			for k := 0; k < n; k++ {
-				sum += a[i][k] * b[k][j]
-			}
-			c[i][j] = sum
-		}
-	}
-	return c
-}
-
-// trace - След матрицы (сумма диагональных элементов)
-func trace(matrix Matrix) float64 {
-	sum := 0.0
-	for i := 0; i < len(matrix); i++ {
-		sum += matrix[i][i]
-	}
-	return sum
-}
-
-// CopyMatrix - Копирование матрицы
-func CopyMatrix(matrix Matrix) Matrix {
-	n := len(matrix)
-	copy := make(Matrix, n)
-	for i := 0; i < n; i++ {
-		copy[i] = make(Vector, n)
-		for j := 0; j < n; j++ {
-			copy[i][j] = matrix[i][j]
-		}
-	}
-	return copy
-}
-
-func Solve(poly Vector) Vector {
-	n := len(poly) - 1
-	results := make(Vector, n)
-
-	for i := 0; i < n; i++ {
-		x0 := 0.1 // Первое начальное приближение
-		x1 := 0.2 // Второе начальное приближение (для метода секущей)
-		iterCount := 0
-		maxIterations := 10000
-
-		var xn float64
-
-		for {
-			fx0 := Substitute(poly, x0)
-			fx1 := Substitute(poly, x1)
-
-			// Проверка на деление на слишком малую разницу
-			if math.Abs(fx1-fx0) < 1e-8 {
-				fmt.Println("Разница между fx1 и fx0 слишком мала, останавливаем вычисления.")
-				break
-			}
-
-			// Метод секущей
-			xn = x1 - fx1*(x1-x0)/(fx1-fx0)
-
-			// Сдвигаем значения для следующей итерации
-			x0, x1 = x1, xn
-
-			// Проверка на сходимость или превышение количества итераций
-			if math.Abs(x1-x0) < 0.00001 || iterCount > maxIterations {
-				break
-			}
-			iterCount++
-		}
-
-		if iterCount >= maxIterations {
-			fmt.Println("Достигнуто максимальное количество итераций.")
-		}
-
-		// Обновляем многочлен делением на (x - xn)
-		poly = PolynomialDivision(poly, xn)
-		results[i] = xn
-	}
-	return results
-}
-
-// Substitute - Подстановка значения в многочлен
-func Substitute(poly Vector, x float64) float64 {
-	result := 0.0
-	for i := len(poly) - 1; i >= 0; i-- {
-		result = result*x + poly[i]
-	}
-	return result
-}
-
-// Derivative - Производная многочлена
-func Derivative(poly Vector) Vector {
-	n := len(poly) - 1
-	derivative := make(Vector, n)
-	for i := 0; i < n; i++ {
-		derivative[i] = poly[i] * float64(n-i)
-	}
-	return derivative
-}
-
-// PolynomialDivision - Деление многочлена на корень
-func PolynomialDivision(poly Vector, root float64) Vector {
-	n := len(poly)
-	result := make(Vector, n-1)
-	result[0] = poly[0]
-	for i := 1; i < n-1; i++ {
-		result[i] = poly[i] + result[i-1]*root
-	}
-	return result
-}
-
-// FindEigenvector - Нахождение собственных векторов
-func FindEigenvector(matrix Matrix, eigenvalue float64) Vector {
-	n := len(matrix)
-	Matr1 := CopyMatrix(matrix)
-	for i := 0; i < n; i++ {
-		Matr1[i][i] -= eigenvalue
-	}
-	return GaussianElimination(Matr1)
-}
-
-// GaussianElimination - Метод Гаусса для нахождения решений системы уравнений
-func GaussianElimination(matrix Matrix) Vector {
-	n := len(matrix)
-	x := make(Vector, n)
-
-	// Initialize x with zeroes
-	for i := 0; i < n; i++ {
-		x[i] = 0
-	}
-
-	// Perform Gaussian elimination to row echelon form
-	for i := 0; i < n; i++ {
-		// Find the pivot element in the current column
-		maxRow := i
-		for k := i + 1; k < n; k++ {
-			if math.Abs(matrix[k][i]) > math.Abs(matrix[maxRow][i]) {
-				maxRow = k
-			}
-		}
-
-		// Swap the current row with the maxRow if needed
-		matrix[i], matrix[maxRow] = matrix[maxRow], matrix[i]
-
-		// Check for a zero pivot (if zero, continue to the next column)
-		if math.Abs(matrix[i][i]) < 1e-8 {
-			continue
-		}
-
-		// Normalize the current row
-		for k := i + 1; k < n; k++ {
-			factor := matrix[k][i] / matrix[i][i]
-			for j := i; j < n; j++ {
-				matrix[k][j] -= factor * matrix[i][j]
-			}
-		}
-	}
-
-	// Check for free variables in row echelon form
-	for i := n - 1; i >= 0; i-- {
-		if math.Abs(matrix[i][i]) < 1e-8 {
-			// Free variable, we can assign it any non-zero value for a non-trivial solution
-			x[i] = 1 // Assign 1 or any non-zero value to suggest a non-trivial solution
-		} else {
-			// Back-substitution
-			sum := 0.0
-			for j := i + 1; j < n; j++ {
-				sum += matrix[i][j] * x[j]
-			}
-			x[i] = -sum / matrix[i][i]
-		}
-	}
-
-	return x
+	// Note: Eigenvector computation would follow using the eigenvalues
 }

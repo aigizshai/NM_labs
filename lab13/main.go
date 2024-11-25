@@ -102,6 +102,6 @@ func main() {
 	fmt.Println("\nЗначение интегралов w_k:")
 	for k := 0; k < n; k++ {
 		omega := 2 * math.Pi * float64(k) / (b - a)
-		fmt.Printf("w_k = %5.0f : %10.6f + %10.6fi\n", omega, real(integrals[k]), imag(integrals[k]))
+		fmt.Printf("w_k = %5.0f : %10.4f + %10.4fi\n", omega, real(integrals[k]), imag(integrals[k]))
 	}
 }
