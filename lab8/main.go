@@ -7,8 +7,10 @@ import (
 
 // Функция для вычисления производных dy1/dx и dy2/dx
 func derivatives(x, y1, y2 float64) (float64, float64) {
-	dy1 := math.Cos(x + y2)
-	dy2 := math.Sin(x - y2)
+	//dy1 := math.Cos(x + y2)
+	//dy2 := math.Sin(x - y2)
+	dy1 := math.Exp(y1 * y2)
+	dy2 := x * y1 * y2
 	return dy1, dy2
 }
 
@@ -110,10 +112,10 @@ func rungeKutta4(a, b, h float64, y1Init, y2Init float64) ([]float64, []float64,
 
 func main() {
 	a := 0.0       // начальная точка
-	b := 4.0       // конечная точка
+	b := 5.0       // конечная точка
 	h := 0.1       // шаг
-	y1Init := 0.7  // начальное значение y1
-	y2Init := -0.5 // начальное значение y2
+	y1Init := -1.0 // начальное значение y1
+	y2Init := 0.0  // начальное значение y2
 
 	// Метод Эйлера
 	x, y1, y2 := eulerMethod(a, b, h, y1Init, y2Init)
